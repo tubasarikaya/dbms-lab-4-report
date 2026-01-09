@@ -98,7 +98,7 @@ Bu yaklaşımın en büyük avantajı, okuyucuların (reader) hiçbir zaman enge
 
 **sqlite3WalFrames fonksiyonundaki sync_flags parametresi, sistem seviyesinde kritik bir ayrımı temsil eder:** verinin sadece işletim sistemi buffer'ına (write sistem çağrısı) yazılması mı, yoksa fsync sistem çağrısı ile fiziksel diske zorlanması mı gerektiğini belirler. write() çağrısı hızlı ancak crash durumunda veri kaybolabilir çünkü veri henüz OS buffer'ında bekliyor olabilir. fsync() ise daha yavaş olmakla birlikte verinin disk platter'larına yazılmasını garanti eder ve atomik işlem özelliği sağlar. Bu mekanizma, SQLite'ın ACID (Atomicity, Consistency, Isolation, Durability) özelliklerinden Durability'yi sağlamasının temelini oluşturur.
 
-Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. Bu işlem, WAL'daki değişiklikleri ana veritabanı dosyasına kopyalar (backfill). Ancak hâlâ okuma yapan transaction'lar varsa, checkpoint onları bekler ve veri tutarlılığını korur.
+Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. Bu işlem, WAL'daki değişiklikleri ana veritabanı dosyasına kopyalar (backfill). Ancak hâla okuma yapan transaction'lar varsa, checkpoint onları bekler ve veri tutarlılığını korur.
 
 **Sonuç**
 

@@ -106,8 +106,19 @@ SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüks
 
 ## VT Üzerinde Gösterilen Kaynak Kodları
 
-Açıklama [Linki](https://...) \
-Açıklama [Linki](https://...) \
-Açıklama [Linki](https://...) \
-... \
+**1. Blok Bazlı Disk Erişimi (block_id + offset):** [pager.c - sqlite3PagerGet](https://github.com/sqlite/sqlite/blob/master/src/pager.c)
+
+**2. VT Sayfa Okuması (Satır/Sayfa):** [pager.c - sqlite3PagerWrite](https://github.com/sqlite/sqlite/blob/master/src/pager.c)
+
+**3. Sık Kullanılan Sayfaları RAM'de Kopyalama (Caching):** [pcache1.c - pcache1Fetch](https://github.com/sqlite/sqlite/blob/master/src/pcache1.c)
+
+**4. LRU Algoritması:** [pcache1.c - struct PgHdr1 ve pcache1Unpin](https://github.com/sqlite/sqlite/blob/master/src/pcache1.c)
+
+**5. Disk I/O Minimizasyonu:** [pcache1.c - Buffer Pool Mekanizması](https://github.com/sqlite/sqlite/blob/master/src/pcache1.c)
+
+**6. B+ Tree Veri Yapısı Kullanımı:** [btree.c - sqlite3BtreeTableMoveto ve sqlite3BtreeIndexMoveto](https://github.com/sqlite/sqlite/blob/master/src/btree.c)
+
+**7. WAL (Write Ahead Log) İlkesi:** [wal.c - sqlite3WalFrames](https://github.com/sqlite/sqlite/blob/master/src/wal.c)
+
+**8. fsync vs write Sistem Çağrıları Farkı:** [wal.c - sqlite3WalFrames (sync_flags parametresi)](https://github.com/sqlite/sqlite/blob/master/src/wal.c)
 ...

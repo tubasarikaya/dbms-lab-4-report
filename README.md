@@ -64,8 +64,6 @@ Ekran kaydı. 2-3 dk. açık kaynak V.T. kodu üzerinde konunun gösterimi. Vide
 
 # Açıklama
 
-**Sistem Programlama ve Veri Yapıları Bakış Açısıyla SQLite Performans Optimizasyonları**
-
 Bu çalışmada, açık kaynaklı ilişkisel veritabanı yönetim sistemi olan SQLite'ın kaynak kodları incelenerek; sistem programlama (işletim sistemi, disk I/O, bellek yönetimi) ve veri yapıları (B+Tree, Page Layout, LRU) perspektifinden performansı optimize etmek amacıyla hazırlanan mekanizmalar analiz edilmiştir. Çalışmanın amacı genel amaçlı dosya sistemlerinin üstüne geçerli, disk erişim maliyetlerini minimize etmek ve veri bütünlüğünü sağlamak için tasarlanmış mimarileri kavramaktır.
 
 **Sistem Perspektifi: Disk ve Sayfa Bazlı Erişim**

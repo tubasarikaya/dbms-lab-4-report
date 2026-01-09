@@ -121,4 +121,3 @@ SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüks
 **7. WAL (Write Ahead Log) İlkesi:** [wal.c - sqlite3WalFrames](https://github.com/sqlite/sqlite/blob/master/src/wal.c)
 
 **8. fsync vs write Sistem Çağrıları Farkı:** [wal.c - sqlite3WalFrames (sync_flags parametresi)](https://github.com/sqlite/sqlite/blob/master/src/wal.c)
-...

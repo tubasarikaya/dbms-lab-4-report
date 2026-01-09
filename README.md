@@ -40,7 +40,7 @@ Aşağıda kutucuk (checkbox) ile gösterilen maddelerden en az birini seçtiği
 DB diske yazarken:
 
 - [X]  WAL (Write Ahead Log) İlkesi
-- [ ]  Log disk (fsync vs write) sistem çağrıları farkı
+- [X]  Log disk (fsync vs write) sistem çağrıları farkı
 
 ---
 
@@ -95,6 +95,8 @@ B+ Tree'nin yaprak düğümleri birbirine bağlıdır (linked list). Bu özellik
 SQLite WAL modunda çalışırken, veritabanındaki değişiklikler doğrudan ana dosyaya yazılmaz. Bunun yerine tüm güncellemeler önce src/wal.c dosyasındaki sqlite3WalFrames fonksiyonu aracılığıyla WAL dosyasına kaydedilir. Her değiştirilen sayfa bir "frame" olarak WAL'a eklenir ve commit işlemi özel bir commit frame ile işaretlenir.
 
 Bu yaklaşımın en büyük avantajı, okuyucuların (reader) hiçbir zaman engellenmemesidir. Ana veritabanı dosyası değişmediği için okuyucular tutarlı bir snapshot üzerinden okumaya devam edebilir. Yazıcı (writer) ise sadece WAL dosyasına yazar ve bu işlem çok hızlıdır.
+
+**sqlite3WalFrames fonksiyonundaki sync_flags parametresi, sistem seviyesinde kritik bir ayrımı temsil eder:** verinin sadece işletim sistemi buffer'ına (write sistem çağrısı) yazılması mı, yoksa fsync sistem çağrısı ile fiziksel diske zorlanması mı gerektiğini belirler. write() çağrısı hızlı ancak crash durumunda veri kaybolabilir çünkü veri henüz OS buffer'ında bekliyor olabilir. fsync() ise daha yavaş olmakla birlikte verinin disk platter'larına yazılmasını garanti eder ve atomik işlem özelliği sağlar. Bu mekanizma, SQLite'ın ACID (Atomicity, Consistency, Isolation, Durability) özelliklerinden Durability'yi sağlamasının temelini oluşturur.
 
 Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. Bu işlem, WAL'daki değişiklikleri ana veritabanı dosyasına kopyalar (backfill). Ancak hâlâ okuma yapan transaction'lar varsa, checkpoint onları bekler ve veri tutarlılığını korur.
 

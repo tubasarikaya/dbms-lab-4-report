@@ -66,13 +66,13 @@ Ekran kaydı. 2-3 dk. açık kaynak V.T. kodu üzerinde konunun gösterimi. Vide
 
 Bu çalışmada, açık kaynaklı ilişkisel veritabanı yönetim sistemi olan SQLite'ın kaynak kodları incelenerek; sistem programlama (işletim sistemi, disk I/O, bellek yönetimi) ve veri yapıları (B+Tree, Page Layout, LRU) perspektifinden performansı optimize etmek amacıyla hazırlanan mekanizmalar analiz edilmiştir. Çalışmanın amacı genel amaçlı dosya sistemlerinin üstüne geçerli, disk erişim maliyetlerini minimize etmek ve veri bütünlüğünü sağlamak için tasarlanmış mimarileri kavramaktır.
 
-**Sistem Perspektifi: Disk ve Sayfa Bazlı Erişim**
+### Sistem Perspektifi: Disk ve Sayfa Bazlı Erişim
 
 Disk, işletim sistemi ve veritabanı yönetim sistemleri için en temel veri depolama alanıdır ancak fiziksel olarak yavaş bir donanımdır. SQLite, veriyi satır satır değil, sayfa (page) bazında organize eder. Her sayfa varsayılan olarak 4 kilobyte boyutundadır ve bir sayfa içinde birden fazla satır bulunabilir. src/pager.c dosyasındaki sqlite3PagerGet fonksiyonu bir sayfa numarası (Pgno) alır ve o sayfanın tamamını diskten RAM'e yükler. sqlite3PagerWrite fonksiyonu ise bir sayfaya yazma yapılmadan önce o sayfayı yazılabilir hale getirir ve gerekli logging mekanizmasını (journal veya WAL) tetikler. Bu sayede crash durumunda rollback işlemi gerçekleştirilebilir.
 
 Disk erişimi blok bazlıdır; tek bir satırı okumak için bile tüm sayfa okunmalıdır. Bu nedenle SQLite, sık erişilen sayfaları RAM'de tutarak (Buffer Pool) gereksiz disk I/O işlemlerini önler.
 
-**Buffer Pool ve LRU Algoritması ile Bellek Yönetimi**
+### Buffer Pool ve LRU Algoritması ile Bellek Yönetimi
 
 SQLite, disk I/O maliyetini azaltmak için sık kullanılan sayfaları bellekte önbelleğe alır. Bu mekanizmaya Buffer Pool (Page Cache) denir. src/pcache1.c dosyasında tanımlanan struct PgHdr1 yapısı her sayfayı temsil eder ve pLruNext ile pLruPrev pointer'ları aracılığıyla dairesel bir LRU (Least Recently Used) listesi oluşturulur.
 
@@ -80,7 +80,7 @@ pcache1Fetch fonksiyonu bir sayfa istendiğinde önce cache'de arar. Eğer sayfa
 
 LRU listesi dairesel (circular) yapıdadır; en yeni kullanılan sayfa listenin sonuna, en eski kullanılan sayfa başına eklenir. Bu tasarım, sık kullanılan root node gibi kritik sayfaların sürekli bellekte kalmasını sağlar.
 
-**Veri Yapıları: B+ Tree ve Sayfa Organizasyonu**
+### Veri Yapıları: B+ Tree ve Sayfa Organizasyonu
 
 SQLite, verileri disk üzerinde rastgele değil, B+ Tree (B Artı Ağacı) veri yapısı ile organize eder. B+ Tree dengeli bir ağaç yapısıdır ve her düğüm bir disk sayfasına karşılık gelir. Gerçek satır verileri yalnızca yaprak (leaf) düğümlerde bulunur; iç düğümler (internal nodes) sadece yönlendirme bilgisi tutar.
 
@@ -90,7 +90,7 @@ sqlite3BtreeIndexMoveto fonksiyonu ise indeks B+ Tree'lerinde çok kolonlu anaht
 
 B+ Tree'nin yaprak düğümleri birbirine bağlıdır (linked list). Bu özellik, aralık sorguları (range scan) için kritik önem taşır; bir anahtar bulunduktan sonra ağacın köküne dönmeden yan taraftaki sayfalara geçilerek sıralı veri okunabilir.
 
-**Veri Bütünlüğü ve WAL (Write-Ahead Logging)**
+### Veri Bütünlüğü ve WAL (Write-Ahead Logging)
 
 SQLite WAL modunda çalışırken, veritabanındaki değişiklikler doğrudan ana dosyaya yazılmaz. Bunun yerine tüm güncellemeler önce src/wal.c dosyasındaki sqlite3WalFrames fonksiyonu aracılığıyla WAL dosyasına kaydedilir. Her değiştirilen sayfa bir "frame" olarak WAL'a eklenir ve commit işlemi özel bir commit frame ile işaretlenir.
 
@@ -100,7 +100,7 @@ sqlite3WalFrames fonksiyonundaki sync_flags parametresi, sistem seviyesinde krit
 
 Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. Bu işlem, WAL'daki değişiklikleri ana veritabanı dosyasına kopyalar (backfill). Ancak hâlâ okuma yapan transaction'lar varsa, checkpoint onları bekler ve veri tutarlılığını korur.
 
-**Sonuç**
+### Sonuç
 
 SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüksek performans elde eder. Sayfa bazlı disk erişimi, LRU algoritması ile bellek yönetimi, B+ Tree indeksleme ve WAL protokolü birlikte çalışarak disk I/O'yu minimize eder. Bu tasarım kararları sayesinde SQLite, verimli bir veritabanı altyapısı sunar.
 

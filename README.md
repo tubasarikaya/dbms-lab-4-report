@@ -64,17 +64,45 @@ Ekran kaydı. 2-3 dk. açık kaynak V.T. kodu üzerinde konunun gösterimi. Vide
 
 # Açıklama (Ort. 600 kelime)
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse lacinia luctus urna, vel aliquet lacus facilisis ac. Donec quis placerat orci, efficitur consectetur lacus. Sed rhoncus erat ex, at sagittis velit mollis et. Aliquam enim orci, sollicitudin sit amet libero quis, mollis ultricies risus. Fusce tempor, felis a consequat tristique, dolor magna convallis nulla, vel ullamcorper magna mauris non ipsum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nam quis imperdiet ex, at blandit sapien. Aliquam lacinia erat ac ipsum fringilla, quis vestibulum augue posuere. Nulla in enim nulla. Nunc euismod odio mauris, sed sollicitudin ex condimentum non. In efficitur egestas enim. Fusce tempus erat quis placerat convallis.
+**Sistem Programlama ve Veri Yapıları Bakış Açısıyla SQLite Performans Optimizasyonları**
 
-Nam sit amet tincidunt ante. Pellentesque sit amet quam interdum, pellentesque dui vel, iaculis elit. Donec sed dui sodales nulla dignissim tincidunt. Maecenas semper metus id fermentum vulputate. Pellentesque lobortis hendrerit venenatis. Nullam imperdiet, ex eget ultricies egestas, mauris nunc aliquam ante, sed consectetur tellus ex vel leo. Nunc ut erat dapibus, auctor dolor eu, pretium sem. In lacinia congue eros et finibus. Aenean auctor, leo a feugiat placerat, urna felis lacinia purus, laoreet volutpat mi nisl eget dui. Ut vitae condimentum leo.
+Bu çalışmada, açık kaynaklı ilişkisel veritabanı yönetim sistemi olan SQLite'ın kaynak kodları incelenerek; sistem programlama (işletim sistemi, disk I/O, bellek yönetimi) ve veri yapıları (B+Tree, Page Layout, LRU) perspektifinden performansı optimize etmek amacıyla hazırlanan mekanizmalar analiz edilmiştir. Çalışmanın amacı genel amaçlı dosya sistemlerinin üstüne geçerli, disk erişim maliyetlerini minimize etmek ve veri bütünlüğünü sağlamak için tasarlanmış mimarileri kavramaktır.
 
-Maecenas ex diam, vehicula et nulla vel, mattis viverra metus. Nam at ex scelerisque, semper augue lobortis, semper est. Etiam id pretium odio, eget rutrum neque. Pellentesque blandit magna vel aliquam gravida. Nullam massa nisl, imperdiet at dapibus non, cursus vehicula turpis. Vestibulum rutrum hendrerit augue. Aliquam id nisi id arcu tempor venenatis vel nec erat. Morbi sed posuere erat. Morbi et sollicitudin urna. Suspendisse ullamcorper vitae purus sit amet sodales. Nam ut tincidunt ipsum, ut varius erat. Duis congue magna nec euismod condimentum. In hac habitasse platea dictumst. Nunc mattis odio sed enim laoreet imperdiet. In hac habitasse platea dictumst. Nullam tincidunt quis.
+**Sistem Perspektifi: Disk ve Sayfa Bazlı Erişim**
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse lacinia luctus urna, vel aliquet lacus facilisis ac. Donec quis placerat orci, efficitur consectetur lacus. Sed rhoncus erat ex, at sagittis velit mollis et. Aliquam enim orci, sollicitudin sit amet libero quis, mollis ultricies risus. Fusce tempor, felis a consequat tristique, dolor magna convallis nulla, vel ullamcorper magna mauris non ipsum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nam quis imperdiet ex, at blandit sapien. Aliquam lacinia erat ac ipsum fringilla, quis vestibulum augue posuere. Nulla in enim nulla. Nunc euismod odio mauris, sed sollicitudin ex condimentum non. In efficitur egestas enim. Fusce tempus erat quis placerat convallis.
+Disk, işletim sistemi ve veritabanı yönetim sistemleri için en temel veri depolama alanıdır ancak fiziksel olarak yavaş bir donanımdır. SQLite, veriyi satır satır değil, sayfa (page) bazında organize eder. Her sayfa varsayılan olarak 4 kilobyte boyutundadır ve bir sayfa içinde birden fazla satır bulunabilir. src/pager.c dosyasındaki sqlite3PagerGet fonksiyonu bir sayfa numarası (Pgno) alır ve o sayfanın tamamını diskten RAM'e yükler. sqlite3PagerWrite fonksiyonu ise bir sayfaya yazma yapılmadan önce o sayfayı yazılabilir hale getirir ve gerekli journal kaydını tutar. Bu sayede crash durumunda rollback işlemi gerçekleştirilebilir.
 
-Nam sit amet tincidunt ante. Pellentesque sit amet quam interdum, pellentesque dui vel, iaculis elit. Donec sed dui sodales nulla dignissim tincidunt. Maecenas semper metus id fermentum vulputate. Pellentesque lobortis hendrerit venenatis. Nullam imperdiet, ex eget ultricies egestas, mauris nunc aliquam ante, sed consectetur tellus ex vel leo. Nunc ut erat dapibus, auctor dolor eu, pretium sem. In lacinia congue eros et finibus. Aenean auctor, leo a feugiat placerat, urna felis lacinia purus, laoreet volutpat mi nisl eget dui. Ut vitae condimentum leo.
+Disk erişimi blok bazlıdır; tek bir satırı okumak için bile tüm sayfa okunmalıdır. Bu nedenle SQLite, sık erişilen sayfaları RAM'de tutarak (Buffer Pool) gereksiz disk I/O işlemlerini önler.
 
-Maecenas ex diam, vehicula et nulla vel, mattis viverra metus. Nam at ex scelerisque, semper augue lobortis, semper est. Etiam id pretium odio, eget rutrum neque. Pellentesque blandit magna vel aliquam gravida. Nullam massa nisl, imperdiet at dapibus non, cursus vehicula turpis. Vestibulum rutrum hendrerit augue. Aliquam id nisi id arcu tempor venenatis vel nec erat. Morbi sed posuere erat. Morbi et sollicitudin urna. Suspendisse ullamcorper vitae purus sit amet sodales. Nam ut tincidunt ipsum, ut varius erat. Duis congue magna nec euismod condimentum. In hac habitasse platea dictumst. Nunc mattis odio sed enim laoreet imperdiet. In hac habitasse platea dictumst. Nullam tincidunt quis.
+**Buffer Pool ve LRU Algoritması ile Bellek Yönetimi**
+
+SQLite, disk I/O maliyetini azaltmak için sık kullanılan sayfaları bellekte önbelleğe alır. Bu mekanizmaya Buffer Pool (Page Cache) denir. src/pcache1.c dosyasında tanımlanan struct PgHdr1 yapısı her sayfayı temsil eder ve pLruNext ile pLruPrev pointer'ları aracılığıyla dairesel bir LRU (Least Recently Used) listesi oluşturulur.
+
+pcache1Fetch fonksiyonu bir sayfa istendiğinde önce cache'de arar. Eğer sayfa bellekteyse disk'e gitmeden doğrudan döndürülür. pcache1Unpin fonksiyonu ise kullanımı biten bir sayfayı LRU listesine ekler. Bellek dolduğunda, en az kullanılan sayfa (liste başındaki) çıkarılır ve yerine yeni sayfa yerleştirilir. Bu algoritma sayesinde sık erişilen sayfalar RAM'de kalır, eski sayfalar ise disk I/O gerektiğinde evict edilir.
+
+LRU listesi dairesel (circular) yapıdadır; en yeni kullanılan sayfa listenin sonuna, en eski kullanılan sayfa başına eklenir. Bu tasarım, sık kullanılan root node gibi kritik sayfaların sürekli bellekte kalmasını sağlar.
+
+**Veri Yapıları: B+ Tree ve Sayfa Organizasyonu**
+
+SQLite, verileri disk üzerinde rastgele değil, B+ Tree (B Artı Ağacı) veri yapısı ile organize eder. B+ Tree dengeli bir ağaç yapısıdır ve her düğüm bir disk sayfasına karşılık gelir. Gerçek satır verileri yalnızca yaprak (leaf) düğümlerde bulunur; iç düğümler (internal nodes) sadece yönlendirme bilgisi tutar.
+
+src/btree.c dosyasındaki sqlite3BtreeTableMoveto fonksiyonu, rowid ile arama yaparken B+ Tree'nin kök sayfasından başlayarak aşağı iner. Her seviyede karşılaştırma yapılır ve doğru alt düğüme geçilir. Milyonlarca satır içeren bir tabloda bile logaritmik zaman karmaşıklığı sayesinde sadece 3-4 sayfa okunarak hedef satıra ulaşılır.
+
+sqlite3BtreeIndexMoveto fonksiyonu ise indeks B+ Tree'lerinde çok kolonlu anahtarlarla arama yapar. Anahtar UnpackedRecord yapısı ile temsil edilir; bu yapı birden fazla sütunun değerini, tipini ve sıralama kuralını içerir. Bu sayede WHERE, JOIN ve ORDER BY gibi sorgular tam tablo taraması yapmadan hızlıca sonuçlanabilir.
+
+B+ Tree'nin yaprak düğümleri birbirine bağlıdır (linked list). Bu özellik, aralık sorguları (range scan) için kritik önem taşır; bir anahtar bulunduktan sonra ağacın köküne dönmeden yan taraftaki sayfalara geçilerek sıralı veri okunabilir.
+
+**Veri Bütünlüğü ve WAL (Write-Ahead Logging)**
+
+SQLite WAL modunda çalışırken, veritabanındaki değişiklikler doğrudan ana dosyaya yazılmaz. Bunun yerine tüm güncellemeler önce src/wal.c dosyasındaki sqlite3WalFrames fonksiyonu aracılığıyla WAL dosyasına kaydedilir. Her değiştirilen sayfa bir "frame" olarak WAL'a eklenir ve commit işlemi özel bir commit frame ile işaretlenir.
+
+Bu yaklaşımın en büyük avantajı, okuyucuların (reader) hiçbir zaman engellenmemesidir. Ana veritabanı dosyası değişmediği için okuyucular tutarlı bir snapshot üzerinden okumaya devam edebilir. Yazıcı (writer) ise sadece WAL dosyasına yazar ve bu işlem çok hızlıdır.
+
+Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. Bu işlem, WAL'daki değişiklikleri ana veritabanı dosyasına kopyalar (backfill). Ancak hâlâ okuma yapan transaction'lar varsa, checkpoint onları bekler ve veri tutarlılığını korur.
+
+**Sonuç**
+
+SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüksek performans elde eder. Sayfa bazlı disk erişimi, LRU algoritması ile bellek yönetimi, B+ Tree indeksleme ve WAL protokolü birlikte çalışarak disk I/O'yu minimize eder. Bu tasarım kararları sayesinde SQLite, verimli bir veritabanı altyapısı sunar.
 
 ## VT Üzerinde Gösterilen Kaynak Kodları
 

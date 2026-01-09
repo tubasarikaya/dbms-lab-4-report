@@ -102,7 +102,7 @@ Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. B
 
 **Sonuç**
 
-SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüksek performans elde eder. Sayfa bazlı disk erişimi, LRU algoritması ile bellek yönetimi, B+ Tree indeksleme ve WAL protokolü birlikte çalışarak disk I/O'yu minimize eder. Bu tasarım kararları sayesinde SQLite, gömülü sistemlerden büyük ölçekli uygulamalara kadar geniş bir yelpazede verimli bir veritabanı altyapısı sunar.
+SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüksek performans elde eder. Sayfa bazlı disk erişimi, LRU algoritması ile bellek yönetimi, B+ Tree indeksleme ve WAL protokolü birlikte çalışarak disk I/O'yu minimize eder. Bu tasarım kararları sayesinde SQLite, verimli bir veritabanı altyapısı sunar.
 
 ## VT Üzerinde Gösterilen Kaynak Kodları
 

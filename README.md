@@ -44,15 +44,16 @@ DB diske yazarken:
 
 ---
 
-# Özet Tablo
+# SQLite Performans Analizi: Bellek-Disk Karşılaştırması
 
-| Kavram      | Bellek          | Disk / DB      |
-| ----------- | --------------- | -------------- |
-| Adresleme   | Pointer         | Page + Offset  |
-| Hız         | O(1)            | Page IO        |
-| PK          | Yok             | Index anahtarı |
-| Veri yapısı | Array / Pointer | B+Tree         |
-| Cache       | CPU cache       | Buffer Pool    |
+| Kavram | Bellek (C / Sistem) | Veri Tabanı (SQLite / Disk) | Teknik Açıklama |
+|--------|---------------------|----------------------------|-----------------|
+| **Adresleme** | RAM Adresi (Pointer) | Pgno (Page Number) + Offset | Bellekte veriye doğrudan pointer ile erişilir; diskte ise sayfa numarası (Pgno) ve sayfa içi konum (offset) ile dolaylı erişim yapılır. SQLite iki seviyeli adresleme kullanır: önce sayfa bulunur, sonra sayfa içinde konum hesaplanır. |
+| **Erişim Hızı** | O(1) (Doğrudan) | Page I/O (Milisaniye seviyesi) | Bellek erişimi nanosaniye mertebesinde sabit zamanlıyken, disk erişimi fiziksel kafa hareketi ve dönel gecikme (rotational delay) nedeniyle milisaniye mertebesindedir. Yaklaşık 1 milyon kat hız farkı vardır. |
+| **Kimlik (Key)** | Değişken Adı / Adres | rowid (INTEGER, B+ Tree Key) | RAM'de veriye değişken ismi veya adres ile ulaşılır, Primary Key kavramı yoktur. SQLite'da her satırın otomatik atanan benzersiz bir rowid'si vardır ve bu B+ Tree yapısının anahtarı olarak kullanılır. |
+| **Veri Yapısı** | Array / Struct / Linked List | B+ Tree / Page Layout | RAM'de basit array ve liste yapıları yeterlidir çünkü tüm veri bellektedir. Diskte ise arama maliyetini düşürmek için dengeli B+ Tree index yapısı, veriyi kompakt tutmak için Page Layout kullanılır. |
+| **Ön Bellek** | CPU L1/L2/L3 Cache | Buffer Pool (LRU - PgHdr1) | CPU cache'i donanımsal ve otomatik olarak çalışır. SQLite ise yazılımsal Buffer Pool kullanır; pcache1.c dosyasındaki LRU algoritması ile sık kullanılan sayfalar (PgHdr1 yapısı) RAM'de tutularak disk I/O minimize edilir. |
+| **Güvenlik** | Yok (Uçucu veri) | WAL (Write-Ahead Logging) + fsync | RAM'deki veri elektrik kesildiğinde tamamen kaybolur (volatile). SQLite ise önce değişiklikleri WAL dosyasına yazar, ardından fsync sistem çağrısı ile diske zorlar (force flush). Böylece crash durumunda bile veri kurtarılabilir ve tutarlılık garanti edilir. |
 
 ---
 

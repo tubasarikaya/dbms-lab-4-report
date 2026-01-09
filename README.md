@@ -68,7 +68,7 @@ Bu çalışmada, açık kaynaklı ilişkisel veritabanı yönetim sistemi olan S
 
 **Sistem Perspektifi: Disk ve Sayfa Bazlı Erişim**
 
-Disk, işletim sistemi ve veritabanı yönetim sistemleri için en temel veri depolama alanıdır ancak fiziksel olarak yavaş bir donanımdır. SQLite, veriyi satır satır değil, sayfa (page) bazında organize eder. Her sayfa varsayılan olarak 4 kilobyte boyutundadır ve bir sayfa içinde birden fazla satır bulunabilir. src/pager.c dosyasındaki sqlite3PagerGet fonksiyonu bir sayfa numarası (Pgno) alır ve o sayfanın tamamını diskten RAM'e yükler. sqlite3PagerWrite fonksiyonu ise bir sayfaya yazma yapılmadan önce o sayfayı yazılabilir hale getirir ve gerekli journal kaydını tutar. Bu sayede crash durumunda rollback işlemi gerçekleştirilebilir.
+Disk, işletim sistemi ve veritabanı yönetim sistemleri için en temel veri depolama alanıdır ancak fiziksel olarak yavaş bir donanımdır. SQLite, veriyi satır satır değil, sayfa (page) bazında organize eder. Her sayfa varsayılan olarak 4 kilobyte boyutundadır ve bir sayfa içinde birden fazla satır bulunabilir. src/pager.c dosyasındaki sqlite3PagerGet fonksiyonu bir sayfa numarası (Pgno) alır ve o sayfanın tamamını diskten RAM'e yükler. sqlite3PagerWrite fonksiyonu ise bir sayfaya yazma yapılmadan önce o sayfayı yazılabilir hale getirir ve gerekli logging mekanizmasını (journal veya WAL) tetikler. Bu sayede crash durumunda rollback işlemi gerçekleştirilebilir.
 
 Disk erişimi blok bazlıdır; tek bir satırı okumak için bile tüm sayfa okunmalıdır. Bu nedenle SQLite, sık erişilen sayfaları RAM'de tutarak (Buffer Pool) gereksiz disk I/O işlemlerini önler.
 
@@ -96,13 +96,13 @@ SQLite WAL modunda çalışırken, veritabanındaki değişiklikler doğrudan an
 
 Bu yaklaşımın en büyük avantajı, okuyucuların (reader) hiçbir zaman engellenmemesidir. Ana veritabanı dosyası değişmediği için okuyucular tutarlı bir snapshot üzerinden okumaya devam edebilir. Yazıcı (writer) ise sadece WAL dosyasına yazar ve bu işlem çok hızlıdır.
 
-**sqlite3WalFrames fonksiyonundaki sync_flags parametresi, sistem seviyesinde kritik bir ayrımı temsil eder:** verinin sadece işletim sistemi buffer'ına (write sistem çağrısı) yazılması mı, yoksa fsync sistem çağrısı ile fiziksel diske zorlanması mı gerektiğini belirler. write() çağrısı hızlı ancak crash durumunda veri kaybolabilir çünkü veri henüz OS buffer'ında bekliyor olabilir. fsync() ise daha yavaş olmakla birlikte verinin disk platter'larına yazılmasını garanti eder ve atomik işlem özelliği sağlar. Bu mekanizma, SQLite'ın ACID (Atomicity, Consistency, Isolation, Durability) özelliklerinden Durability'yi sağlamasının temelini oluşturur.
+sqlite3WalFrames fonksiyonundaki sync_flags parametresi, sistem seviyesinde kritik bir ayrımı temsil eder: verinin sadece işletim sistemi buffer'ına (write sistem çağrısı) yazılması mı, yoksa fsync sistem çağrısı ile fiziksel diske zorlanması mı gerektiğini belirler. write() çağrısı hızlı ancak crash durumunda veri kaybolabilir çünkü veri henüz OS buffer'ında bekliyor olabilir. fsync() ise daha yavaş olmakla birlikte verinin kalıcı depolama alanına yazılmasını garanti eder ve atomik işlem özelliği sağlar. Bu mekanizma, SQLite'ın ACID (Atomicity, Consistency, Isolation, Durability) özelliklerinden Durability'yi sağlamasının temelini oluşturur.
 
-Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. Bu işlem, WAL'daki değişiklikleri ana veritabanı dosyasına kopyalar (backfill). Ancak hâla okuma yapan transaction'lar varsa, checkpoint onları bekler ve veri tutarlılığını korur.
+Zamanla büyüyen WAL dosyası sqlite3WalCheckpoint fonksiyonu ile temizlenir. Bu işlem, WAL'daki değişiklikleri ana veritabanı dosyasına kopyalar (backfill). Ancak hâlâ okuma yapan transaction'lar varsa, checkpoint onları bekler ve veri tutarlılığını korur.
 
 **Sonuç**
 
-SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüksek performans elde eder. Sayfa bazlı disk erişimi, LRU algoritması ile bellek yönetimi, B+ Tree indeksleme ve WAL protokolü birlikte çalışarak disk I/O'yu minimize eder. Bu tasarım kararları sayesinde SQLite, verimli bir veritabanı altyapısı sunar.
+SQLite, sistem programlama ilkeleri ve veri yapılarını etkin kullanarak yüksek performans elde eder. Sayfa bazlı disk erişimi, LRU algoritması ile bellek yönetimi, B+ Tree indeksleme ve WAL protokolü birlikte çalışarak disk I/O'yu minimize eder. Bu tasarım kararları sayesinde SQLite, gömülü sistemlerden büyük ölçekli uygulamalara kadar geniş bir yelpazede verimli bir veritabanı altyapısı sunar.
 
 ## VT Üzerinde Gösterilen Kaynak Kodları
 

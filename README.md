@@ -27,6 +27,7 @@ Sık kullanılan sayfalar RAM'de tutulur; buna **Buffer Pool** denir. Bir sayfa 
 ### Sonuç
 
 Veritabanı performansı; disk fiziksel sınırlamalarını aşmak için **sayfa bazlı erişim**, sık kullanılan verileri bellekte tutmak için **önbellekleme**, hızlı arama için **dengeli ağaç yapıları** ve veri bütünlüğü için **doğru sistem çağrılarının** kombinasyonudur.
+
 ---
 
 # 1. Sistem Perspektifi (Operating System, Disk, Input/Output)

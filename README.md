@@ -1,6 +1,6 @@
 # Deney Sonu Teslimatı
 
-### Sistem Programlama ve Veri Yapıları bakış açısıyla veri tabanlarındaki performansı öne çıkaran hususlar nelerdir?
+## Sistem Programlama ve Veri Yapıları bakış açısıyla veri tabanlarındaki performansı öne çıkaran hususlar nelerdir?
 
 Veritabanı performansı temel olarak **disk ve bellek arasındaki hız farkını** yönetme problemidir. Disk erişimi milisaniye, bellek erişimi nanosaniye mertebesindedir; bu yaklaşık **milyon kat farktır**.
 

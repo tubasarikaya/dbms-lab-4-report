@@ -6,25 +6,23 @@ Veritabanı performansı temel olarak **disk ve bellek arasındaki hız farkın�
 
 ### Disk Erişim Stratejisi
 
-Diskler **blok bazlı** çalışır; satır bazlı okuma fiziksel olarak mümkün değildir. Veritabanları bu gerçeği kabul ederek veriyi sabit boyutlu **sayfalara (page)** böler. Bir sayfaya erişmek zorunda kalındığında, o sayfanın tamamı okunur. SQLite'da `sqlite3PagerGet` fonksiyonu **Pgno (Page Number)** parametresi ile çalışır ve bu yaklaşımı uygular. Sonraki satırlara erişim ücretsiz hale gelir ve **rastgele erişim** yerine **sıralı erişim** teşvik edilir.
+Diskler **blok bazlı** çalışır; satır bazlı okuma fiziksel olarak mümkün değildir. Veritabanları bu gerçeği kabul ederek veriyi sabit boyutlu **sayfalara (page)** böler. Bir sayfaya erişmek zorunda kalındığında, o sayfanın tamamı okunur. Bu yaklaşım sonraki satırlara erişimi ücretsiz hale getirir. **Page ID + Offset** ile adresleme yapılır ve **rastgele erişim** yerine **sıralı erişim** teşvik edilir. Her sayfa genellikle 4KB veya 8KB boyutundadır ve işletim sisteminin disk blok boyutuyla uyumludur.
 
 ### Bellek Hiyerarşisi ve Önbellekleme
 
-Sık kullanılan sayfalar RAM'de tutulur; buna **Buffer Pool** denir. `pcache1Fetch` fonksiyonu bir sayfa istendiğinde önce cache'de arar. Bellek dolduğunda **sayfa değiştirme algoritmaları** devreye girer. **LRU (Least Recently Used)** en bilinen algoritmadır; `pcache1Unpin` fonksiyonu bu mekanizmayı `struct PgHdr1` yapısındaki `pLruNext` ve `pLruPrev` pointer'ları ile gerçekleştirir. **CLOCK** gibi daha verimli varyasyonlar da mevcuttur. Bu algoritmaların amacı **cache hit oranını** maksimize etmektir; her **cache miss** bir disk I/O anlamına gelir.
+Sık kullanılan sayfalar RAM'de tutulur; buna **Buffer Pool** denir. Bir sayfa istendiğinde önce cache'de aranır; varsa disk'e gidilmez. Bellek dolduğunda **sayfa değiştirme algoritmaları** devreye girer. **LRU (Least Recently Used)** en az kullanılan sayfayı çıkarır; **CLOCK** algoritması ise daha verimli bir varyasyondur ve ikinci şans prensibiyle çalışır. Bu algoritmaların amacı **cache hit oranını** maksimize etmektir; her **cache miss** bir disk I/O anlamına gelir ve performansı düşürür.
 
 ### Veri Organizasyonu ve Index Yapıları
 
-**B+ Tree** dengeli bir ağaç yapısıdır ve veritabanlarında standart haline gelmiştir. Yüksek **branching factor** sayesinde ağaç kısa kalır; bu da **logaritmik aramayı** pratikte 3-4 disk erişimine indirger. `sqlite3BtreeTableMoveto` fonksiyonu **rowid** ile arama yaparken bu yapıyı kullanır. B+ Tree'nin yapraklarının bağlı olması, **aralık sorgularını (range scan)** verimli hale getirir. 
-
-Farklı sistemler farklı varyasyonlar kullanır: **InnoDB** clustered index tercih eder, **PostgreSQL** heap-based yaklaşım kullanır, **LSM-tree** tabanlı sistemler (LevelDB, RocksDB) yazma ağırlıklı işler için optimize edilmiştir.
+**B+ Tree** dengeli bir ağaç yapısıdır ve veritabanlarında standart haline gelmiştir. Yüksek **branching factor** sayesinde ağaç kısa kalır; bu da **logaritmik aramayı** pratikte 3-4 disk erişimine indirger. Her düğüm bir disk sayfasına karşılık gelir ve gerçek veriler sadece yaprak düğümlerde tutulur; iç düğümler yönlendirme bilgisi içerir. Yaprakların birbirine bağlı olması, **aralık sorgularını (range scan)** verimli hale getirir. Farklı sistemler farklı yaklaşımlar kullanır: **InnoDB** verileri clustered index içinde tutar, **PostgreSQL** heap tabanlı depolama kullanır, **LSM-tree** (LevelDB, RocksDB) yazma ağırlıklı işler için optimize edilmiştir.
 
 ### Index Türleri
 
-**Clustered index** verinin kendisini içerir ve primary key'e göre fiziksel sıralamayı belirler. **Non-clustered index** ayrı bir yapıdır ve sadece key-pointer çiftleri tutar. `sqlite3BtreeIndexMoveto` fonksiyonu çok kolonlu anahtarlarla arama yaparken **UnpackedRecord** yapısını kullanır. Her ikisinin de avantaj ve dezavantajları vardır; seçim, okuma/yazma oranına ve sorgu tiplerine göre yapılır.
+**Clustered index** verinin kendisini içerir ve primary key'e göre fiziksel sıralamayı belirler. Veriye tek erişimle ulaşılır ancak yazma maliyeti yüksektir. **Non-clustered index** ayrı bir yapıdır ve sadece key-pointer çiftleri tutar. Okuma için iki erişim gerekir (önce index, sonra veri) ancak esneklik sağlar. Hangi türün kullanılacağı, okuma/yazma oranına ve sorgu paternlerine bağlıdır.
 
 ### Kalıcılık ve Sistem Çağrıları
 
-**Write-Ahead Logging (WAL)** prensibi, değişikliklerin önce log'a yazılmasını zorunlu kılar. `sqlite3WalFrames` fonksiyonu bu işlemi gerçekleştirir. Ancak `write()` sistem çağrısı yeterli değildir; veri işletim sistemi buffer'ında kalabilir. `fsync()` çağrısı fiziksel diske yazılmayı garanti eder. İki çağrı arasındaki **trade-off** performans ve güvenlik dengesini belirler; `write()` hızlı ancak crash'te veri kaybı riski taşır, `fsync()` güvenli ancak yavaştır. `sqlite3WalFrames` fonksiyonundaki **sync_flags** parametresi bu ayrımı kontrol eder.
+**Write-Ahead Logging (WAL)** prensibi, değişikliklerin önce log'a yazılmasını zorunlu kılar. Bu sayede crash durumunda veri kurtarılabilir. Ancak sadece **write()** sistem çağrısı yeterli değildir; veri işletim sistemi buffer'ında kalabilir. **fsync()** çağrısı verinin fiziksel diske yazılmasını garanti eder. İki çağrı arasındaki **trade-off** kritiktir: **write()** hızlı ancak crash'te veri kaybı riski taşır, **fsync()** güvenli ancak yavaştır. Veritabanları genellikle group commit gibi tekniklerle **fsync()** çağrılarını toplu hale getirerek dengeyi sağlar.
 
 ### Sonuç
 

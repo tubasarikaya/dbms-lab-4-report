@@ -1,6 +1,13 @@
 # Deney Sonu Teslimatı
 
-Sistem Programlama ve Veri Yapıları bakış açısıyla veri tabanlarındaki performansı öne çıkaran hususlar nelerdir?
+### Sistem Programlama ve Veri Yapıları bakış açısıyla veri tabanlarındaki performansı öne çıkaran hususlar nelerdir?
+
+Veritabanı performansı, sistem programlama ve veri yapıları perspektifinden şu temel mekanizmalara dayanır:
+Disk ve bellek arasındaki köprü sayfa bazlı erişimdir. Diskler byte bazında değil, blok bazında çalışır. Veritabanları bu gerçeği kabul ederek veriyi sabit boyutlu sayfalara (genellikle 4KB) böler ve sayfa numarası (page ID) ile adresler. Tek bir satıra erişmek için bile tüm sayfa okunur; bu maliyetli görünse de, aynı sayfadaki diğer satırlara sonraki erişimler ücretsiz hale gelir. Bu yaklaşım, disk'in fiziksel yapısıyla uyumludur ve rastgele erişim yerine sıralı erişimi teşvik eder.
+Önbellekleme stratejisi disk I/O'yu minimize eder. Buffer Pool mekanizması, sık kullanılan sayfaları RAM'de tutar. Bir sayfa istendiğinde önce cache'e bakılır; eğer sayfa bellekteyse (cache hit), disk'e hiç gidilmez ve erişim milisaniyelerden nanosaniyelere düşer. Bellek dolduğunda hangi sayfanın atılacağına LRU (Least Recently Used) gibi algoritmalalar karar verir. Bu algoritma, en az kullanılan sayfayı dairesel bir linked list yapısında izler ve bellek baskısı olduğunda eski sayfaları öncelikli olarak tahliye eder. Böylece sık erişilen sayfalar (örneğin B+ Tree'nin kök sayfası) sürekli bellekte kalır.
+Veri organizasyonu arama hızını belirler. Veriler disk üzerinde rastgele değil, B+ Tree gibi dengeli ağaç yapılarıyla organize edilir. Her düğüm bir disk sayfasıdır ve ağaç dengeli tutulduğu için arama derinliği logaritmiktir. Milyonlarca kayıt içeren tablolarda bile sadece 3-4 sayfa okunarak hedefe ulaşılır. B+ Tree'nin yaprak düğümleri birbirine bağlı olduğu için aralık sorguları (range scan) ağacın tepesine dönmeden yan tarafa geçerek hızlıca tamamlanır. Bu, tam tablo taramasına göre muazzam bir kazançtır.
+Veri güvenliği ve performans dengesi sistem çağrılarıyla kurulur. Write-Ahead Logging (WAL) prensibi, değişiklikleri önce log dosyasına yazmayı gerektirir. Ancak bir write() sistem çağrısı yeterli değildir; veri işletim sistemi buffer'ında bekleyebilir. Kalıcılık garantisi için fsync() çağrısı gereklidir; bu çağrı verinin fiziksel diske yazılmasını zorlar. write() hızlı ama riskli, fsync() yavaş ama güvenlidir. Bu ikisi arasındaki denge, veritabanının ACID özelliklerini karşılarken performanstan taviz vermemesini sağlar.
+Sonuç olarak, veritabanı performansı tek bir faktöre indirgenemez; sayfa bazlı disk erişimi, akıllı önbellekleme, dengeli ağaç yapıları ve doğru sistem çağrılarının birleşimidir. 
 
 ---
 

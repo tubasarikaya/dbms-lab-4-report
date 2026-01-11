@@ -1,6 +1,7 @@
 # Deney Sonu Teslimatı
 
 Sistem Programlama ve Veri Yapıları bakış açısıyla veri tabanlarındaki performansı öne çıkaran hususlar nelerdir?
+
 ---
 
 # 1. Sistem Perspektifi (Operating System, Disk, Input/Output)
@@ -53,7 +54,6 @@ DB diske yazarken:
 ---
 
 # Video [Linki](https://www.youtube.com/watch?v=Nw1OvCtKPII&t=2635s) 
-Ekran kaydı. 2-3 dk. açık kaynak V.T. kodu üzerinde konunun gösterimi. Video kendini tanıtma ile başlamalıdır (Numara, İsim, Soyisim, Teknik İlgi Alanları). 
 
 ---
 
